@@ -1,0 +1,2 @@
+- raw: Storing the raw result which is generated from "preparation" folder code.
+- processed: to persist processed data.
