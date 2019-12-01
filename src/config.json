@@ -1,0 +1,19 @@
+{
+    "logger": {
+        "name": "Root",
+        "verbose": true,
+        "format": "%(levelname)s: %(message)s"
+    },
+
+    "dataProcessor": {
+        
+    },
+
+    "model": {
+
+    },
+
+    "evaluator": {
+
+    }
+}
