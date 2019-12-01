@@ -1,4 +1,8 @@
-{
+{   
+    "app": {
+
+    },
+    
     "logger": {
         "name": "Root",
         "verbose": true,
