@@ -6,7 +6,9 @@
     },
 
     "dataProcessor": {
-        
+        "dataDir": "data/raw/",
+        "datasets": ["hepatitis.data"],
+        "testSetSize": 0.2 
     },
 
     "model": {
