@@ -9,6 +9,7 @@ class DataProcessor:
                                     config['dataProcessor']['dataDir'],
                                     filename)
         self.data = self.readData(datasetPath)
+        self.data = self.ignoreMissingValues()
         self.data = self.splitTrainingFromTestingSet(config['dataProcessor']['testSetSize'])
         self.data = self.splitLabelsFromData()
 
@@ -31,3 +32,12 @@ class DataProcessor:
         self.logger.info('  Splitting data ...')
         train, test = train_test_split(self.data, test_size=testSetSize)
         return {'train': train, 'test': test}
+
+    def ignoreMissingValues(self):
+        # TODO: adjust the question mark
+        self.logger.info('  Ignoring missing values ...')
+        indicies = []
+        for index, row in self.data.iterrows():
+            if '?' in row.values:
+                indicies.append(index)
+        return self.data.drop(indicies)
