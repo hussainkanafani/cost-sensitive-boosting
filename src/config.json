@@ -1,25 +1,28 @@
-{   
-    "app": {
-
-    },
-    
+{
+    "app": {},
     "logger": {
         "name": "Root",
         "verbose": true,
         "format": "%(levelname)s: %(message)s"
     },
-
     "dataProcessor": {
         "dataDir": "data/raw/",
-        "datasets": ["hepatitis.data"],
-        "testSetSize": 0.2 
+        "datasets": [
+            "hepatitis.data"
+        ],
+        "testSetSize": 0.2
     },
-
     "model": {
-
+        "algorithms": [
+            "adacost",
+            "adac1",
+            "adac2"
+        ],
+        "base_estimator": "DecisionTreeClassifier",
+        "n_estimators": 50,
+        "learning_rate": 1.0,
+        "class_weight": "balanced",
+        "random_state": 0
     },
-
-    "evaluator": {
-
-    }
+    "evaluator": {}
 }
