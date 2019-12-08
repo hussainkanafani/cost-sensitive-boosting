@@ -1,4 +1,8 @@
-{
+{   
+    "app": {
+
+    },
+    
     "logger": {
         "name": "Root",
         "verbose": true,
@@ -6,7 +10,9 @@
     },
 
     "dataProcessor": {
-        
+        "dataDir": "data/raw/",
+        "datasets": ["hepatitis.data"],
+        "testSetSize": 0.2 
     },
 
     "model": {
