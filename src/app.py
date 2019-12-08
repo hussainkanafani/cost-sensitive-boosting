@@ -21,14 +21,16 @@ def main(config):
     for dataset in datasets:
         logger.info('Processing dataset {} ...'.format(dataset))
         dataProcessor = DataProcessor(dataset, config, logger)
-        #get splitted data 
+        # get splitted data
         data = [dataProcessor.data['trainX'], dataProcessor.data['trainY'],
                 dataProcessor.data['testX'], dataProcessor.data['testX']]
         for algorithm in config.model.algorithms:
             model = createClassifier(
                 algorithm, base_estimator, n_estimators, learning_rate, class_weight, random_state)
             model_runner = ModelRunner(model, data)
+            logger.info('Training algorithm {} ...'.format(algorithm))
             results[algorithm] = model_runner.run()
+            logger.info('Predicted Values of X-test {}'.format(results[algorithm]))
 
 
 def readAppConfigs():
@@ -39,6 +41,7 @@ def readAppConfigs():
         os.path.dirname(os.path.realpath(__file__)))
 
     return config
+
 
 if __name__ == "__main__":
     main(readAppConfigs())
