@@ -6,10 +6,40 @@
         "format": "%(levelname)s: %(message)s"
     },
     "dataProcessor": {
-        "dataDir": "data/raw/",
+        "dataDir": "data/processed/",
         "datasets": [
-            "hepatitis.data"
+            {
+                "filename": "hepatitis.data",
+                "categorical_features": []
+            },
+            
+            {
+                "filename": "breast-cancer.data",
+                "categorical_features": ["age","menopause","tumor-size","inv-nodes","node-caps","deg-malig"
+                                        ,"breast","breast-quad","irradiat"]
+            },
+            {
+                "filename": "diabetes.csv",
+                "categorical_features": []
+            },
+            {
+                "filename": "bank-additional-full.csv",
+                "categorical_features": ["job","marital", "education", "default", "housing", "loan", "contact",
+                                        "month", "day_of_week", "poutcome"]
+            },
+            {
+                "filename": "ldpa.csv",
+                "categorical_features": []
+            }
         ],
+        "please_add_to_the_list_after_solving_the_missing_values_problem": {
+            "filename": "sick-euthyroid.data",
+            "categorical_features": ["sex", "on_thyroxine","query_on_thyroxine",
+                                    "on_antithyroid_medication","thyroid_surgery","query_hypothyroid",
+                                    "query_hyperthyroid","pregnant","sick","tumor","lithium","goitre",
+                                    "tsh_measured", "t3_measured", "tt4_measured", "t4u_measured",
+                                    "fti_measured", "tbg_measured"]
+        }, 
         "testSetSize": 0.2
     },
     "model": {

@@ -19,7 +19,7 @@ def main(config):
     random_state = config.model.random_state
     datasets = config.dataProcessor.datasets
     for dataset in datasets:
-        logger.info('Processing dataset {} ...'.format(dataset))
+        logger.info('Processing dataset {} ...'.format(dataset.filename))
         dataProcessor = DataProcessor(dataset, config, logger)
         # get splitted data
         data = [dataProcessor.data['trainX'], dataProcessor.data['trainY'],
