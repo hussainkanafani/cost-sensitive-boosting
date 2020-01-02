@@ -54,5 +54,6 @@
         "class_weight": "balanced",
         "random_state": 0
     },
-    "evaluator": {}
+    "evaluator": {},
+    "tracker": false
 }

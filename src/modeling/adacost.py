@@ -11,6 +11,7 @@ from sklearn.utils import (check_random_state,
                            column_or_1d)
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_is_fitted
+from .model_tracker import ModelTracker
 
 __all__ = ['AdaCost']
 
@@ -28,7 +29,8 @@ class AdaCost(AdaBoostClassifier):
                  learning_rate=1.,
                  algorithm=None,
                  class_weight='balanced',
-                 random_state=None):
+                 random_state=None,
+                 tracker = None):
         """
 
         :param base_estimator: object, optional (default=DecisionTreeClassifier)
@@ -42,10 +44,10 @@ class AdaCost(AdaBoostClassifier):
                There is a trade-off between "learning_rate" and "n_estimators".
         :param algorithm: algorithm: {'adacost', 'adac1', 'adac2', 'adac3'}, optional (default='adacost')
         :param class_weight: dict, list of dicts, “balanced” or None, default=None
-               Weights associated with classes in the form {class_label: weight}. The “balanced” mode uses 
-               the values of y to automatically adjust weights inversely proportional to class frequencies 
+               Weights associated with classes in the form {class_label: weight}. The “balanced” mode uses
+               the values of y to automatically adjust weights inversely proportional to class frequencies
                in the input data as n_samples / (n_classes * np.bincount(y))If not given, all classes are
-               supposed to have weight one. For multi-output problems, a list of dicts can be provided in 
+               supposed to have weight one. For multi-output problems, a list of dicts can be provided in
                the same order as the columns of y.
         :param random_state: int, RandomState instance or None, optional (default=None)
                If int, random_state is the seed used by the random number generator; If RandomState instance,
@@ -60,6 +62,9 @@ class AdaCost(AdaBoostClassifier):
 
         self.algorithm = algorithm
         self.class_weight = class_weight
+        self.model_tracker = None
+        if tracker:
+            self.model_tracker = ModelTracker.create_tracker(algorithm)
 
     def fit(self, X, y, sample_weight=None):
         """
@@ -101,8 +106,7 @@ class AdaCost(AdaBoostClassifier):
         else:
             sample_weight = check_array(sample_weight, ensure_2d=False)
         # Normalize existing weights
-        #sample_weight = sample_weight / sample_weight.sum(dtype=np.float64)
-
+        sample_weight = sample_weight / sample_weight.sum(dtype=np.float64)
         # Check that the sample weights sum is positive
         if sample_weight.sum() <= 0:
             raise ValueError(
@@ -145,7 +149,9 @@ class AdaCost(AdaBoostClassifier):
             # Stop if the sum of sample weights has become non-positive
             if sample_weight_sum <= 0:
                 break
-
+            
+            if self.model_tracker:
+                ModelTracker.dump_tracker(self.model_tracker)
         return self
 
     def _boost(self, iboost, X, y, sample_weight, random_state):
@@ -176,7 +182,6 @@ class AdaCost(AdaBoostClassifier):
         estimator.fit(X, y, sample_weight=sample_weight)
 
         y_predict = estimator.predict(X)
-
         if iboost == 0:
             self.classes_ = getattr(estimator, 'classes_', None)
             self.n_classes_ = len(self.classes_)
@@ -198,7 +203,7 @@ class AdaCost(AdaBoostClassifier):
             estimator_error = np.mean(np.average(incorrect, weights=sample_weight*np.power(self.cost_, 2), axis=0))
         else:
             raise ValueError("Algorithms 'adacost', 'adac1', 'adac2' and 'adac3' are accepted;"\
-                             " got {0}".format(self.algorithm))
+                " got {0}".format(self.algorithm))
         # Stop if classification is perfect
         if estimator_error <= 0:
             return sample_weight, 1., 0.
@@ -246,7 +251,19 @@ class AdaCost(AdaBoostClassifier):
                                                      ((sample_weight > 0) | (estimator_weight < 0)))
             else:
                 raise ValueError("algorithm %s is not supported" % self.algorithm)
-
+            
+            
+            if self.model_tracker:
+                self.model_tracker.iterations.append(
+                {
+                        "sample_weight": sample_weight.tolist(),
+                        "class_costs": self.cost_.tolist(),
+                        "estimator_weight": estimator_weight,
+                        "gamma": self.learning_rate,
+                        "estimator_error": estimator_error
+                })
+            
+            
         return sample_weight, estimator_weight, estimator_error
 
     def _validate_estimator(self):
@@ -307,7 +324,7 @@ class AdaCost(AdaBoostClassifier):
                  that of the 'classes_' attribute.
         """
         check_is_fitted(self, "n_classes_")
-        #X = super()._validate_X_predict(X)
+        # X = super()._validate_X_predict(X)
 
         classes = self.classes_[:, np.newaxis]
         pred = sum((estimator.predict(X) == classes).T * w

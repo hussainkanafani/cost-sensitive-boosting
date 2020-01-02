@@ -18,6 +18,7 @@ def main(config):
     class_weight = config.model.class_weight
     random_state = config.model.random_state
     datasets = config.dataProcessor.datasets
+    tracker =config.tracker
     for dataset in datasets:
         logger.info('Processing dataset {} ...'.format(dataset.filename))
         dataProcessor = DataProcessor(dataset, config, logger)
@@ -26,7 +27,7 @@ def main(config):
                 dataProcessor.data['testX'], dataProcessor.data['testY']]
         for algorithm in config.model.algorithms:
             model = createClassifier(
-                algorithm, base_estimator, n_estimators, learning_rate, class_weight, random_state)
+                algorithm, base_estimator, n_estimators, learning_rate, class_weight, random_state, tracker)
             model_runner = ModelRunner(model, data)
             logger.info('Training algorithm {} ...'.format(algorithm))
             results[algorithm] = model_runner.run()
