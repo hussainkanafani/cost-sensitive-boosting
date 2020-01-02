@@ -23,7 +23,7 @@ def main(config):
         dataProcessor = DataProcessor(dataset, config, logger)
         # get splitted data
         data = [dataProcessor.data['trainX'], dataProcessor.data['trainY'],
-                dataProcessor.data['testX'], dataProcessor.data['testX']]
+                dataProcessor.data['testX'], dataProcessor.data['testY']]
         for algorithm in config.model.algorithms:
             model = createClassifier(
                 algorithm, base_estimator, n_estimators, learning_rate, class_weight, random_state)
