@@ -55,5 +55,5 @@
         "random_state": 0
     },
     "evaluator": {},
-    "tracker": false
+    "tracker": true
 }

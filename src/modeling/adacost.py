@@ -106,7 +106,7 @@ class AdaCost(AdaBoostClassifier):
         else:
             sample_weight = check_array(sample_weight, ensure_2d=False)
         # Normalize existing weights
-        sample_weight = sample_weight / sample_weight.sum(dtype=np.float64)
+        #sample_weight = sample_weight / sample_weight.sum(dtype=np.float64)
         # Check that the sample weights sum is positive
         if sample_weight.sum() <= 0:
             raise ValueError(
