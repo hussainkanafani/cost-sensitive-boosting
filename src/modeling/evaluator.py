@@ -14,9 +14,5 @@ def evaluate(true_data, predicted_data):
             result.update({"f_measure_" + str(av) : f1, "g_mean_" + str(av): g_mean})
         except:
             pass
-    return result
-
-y_true = [0, 1, 0, 0, 1, 1]
-y_pred = [0, 0, 1, 0, 0, 1]
-print(evaluate(y_true, y_pred))
+    return result["f_measure_binary"],result["g_mean_binary"]
 

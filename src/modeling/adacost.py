@@ -221,14 +221,14 @@ class AdaCost(AdaBoostClassifier):
 
         # Boost weight based on algorithm (Nikolaou et al Mach Learn (2016) 104:359–384)
         if self.algorithm == "adacost" or self.algorithm == "adac2":
-            estimator_weight = self.learning_rate * 0.5 * (
+            estimator_weight = 0.5 * (
                 np.log((1. - estimator_error) / estimator_error))
         elif self.algorithm == "adac1":
-            estimator_weight = self.learning_rate * 0.5 * (
+            estimator_weight =  0.5 * (
                 np.log((1 + (1. - estimator_error) - estimator_error) /
                        (1 - (1. - estimator_error) + estimator_error)))
         elif self.algorithm == "adac3":
-            estimator_weight = self.learning_rate * 0.5 * (
+            estimator_weight = 0.5 * (
                 np.log((np.sum(sample_weight*self.cost_) + (1 - estimator_error) - estimator_error) /
                        (np.sum(sample_weight*self.cost_) - (1. - estimator_error) + estimator_error)))
         # Only boost the weights if it will fit again
