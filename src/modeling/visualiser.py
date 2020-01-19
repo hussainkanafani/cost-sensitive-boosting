@@ -4,10 +4,12 @@ from sklearn.decomposition import PCA
 import matplotlib.markers
 import numpy as np
 
-def plot_cost_fmeasure_gmean(algorithm,costs, fmeasues, gmean):
+def plot_cost_fmeasure_gmean(algorithm,costs, fmeasues,precision,recall):
     sns.set()
     plt.plot(costs, fmeasues, '--bo', label='F-measure')
-    plt.plot(costs, gmean, '--go', label='gmean')
+    plt.plot(costs, precision, '--go', label='Precision')
+    plt.plot(costs, recall, '--ro', label='Recall')
+    #plt.plot(costs, gmean, '--go', label='gmean')
     plt.legend(loc="upper left")
     plt.ylim(0,1)
     plt.xlabel('Cost Setup')    

@@ -17,8 +17,7 @@
     },
     "model": {
         "algorithms": [
-            "adac1",
-            "adac2"
+            "adac3"
         ],
         "base_estimator": "DecisionTreeClassifier",
         "n_estimators": 10,

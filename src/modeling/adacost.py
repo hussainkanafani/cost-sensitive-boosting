@@ -101,8 +101,10 @@ class AdaCost(AdaBoostClassifier):
             # Initialize weights to class weights
             # assign class weight to each sample index
             sample_weight = np.copy(y).astype(float)
-            for n in range(len(self.classes)):
-                sample_weight[y == n] = self.class_weight_[n]
+            init_sample_weight = 1/len(y)
+            sample_weight=np.full(y.shape, init_sample_weight)
+            #for n in range(len(self.classes)):
+            #    sample_weight[y == n] = self.class_weight_[n]
         else:
             sample_weight = check_array(sample_weight, ensure_2d=False)
         # Normalize existing weights
@@ -221,18 +223,22 @@ class AdaCost(AdaBoostClassifier):
 
         # Boost weight based on algorithm (Nikolaou et al Mach Learn (2016) 104:359–384)
         if self.algorithm == "adacost" or self.algorithm == "adac2":
-            estimator_weight = 0.5 * (
+            estimator_weight = self.learning_rate * 0.5 * (
                 np.log((1. - estimator_error) / estimator_error))
         elif self.algorithm == "adac1":
-            estimator_weight =  0.5 * (
+            estimator_weight = self.learning_rate * 0.5 * (
                 np.log((1 + (1. - estimator_error) - estimator_error) /
                        (1 - (1. - estimator_error) + estimator_error)))
         elif self.algorithm == "adac3":
-            estimator_weight = 0.5 * (
-                np.log((np.sum(sample_weight*self.cost_) + (1 - estimator_error) - estimator_error) /
+            estimator_weight = self.learning_rate * 0.5 * (
+                np.log((np.sum(sample_weight*self.cost_) + (1. - estimator_error) - estimator_error) /
                        (np.sum(sample_weight*self.cost_) - (1. - estimator_error) + estimator_error)))
         # Only boost the weights if it will fit again
         if iboost < self.n_estimators - 1:
+            # replace boolean values with -1 for mislcassified items and 1 for correctly classified,
+            # in order to easily update the sample weights 
+            incorrect= np.where(incorrect == False, 1., -1.)
+            
             if self.algorithm == "adacost":
                 beta = np.copy(self.cost_).astype(float)
                 beta[y == y_predict] = np.array(list(map(lambda x: -0.5 * x + 0.5, self.cost_[y == y_predict])))
@@ -241,14 +247,11 @@ class AdaCost(AdaBoostClassifier):
                 sample_weight *= np.exp(beta * estimator_weight * incorrect *
                                         ((sample_weight > 0) | (estimator_weight < 0)))
             elif self.algorithm == "adac1":
-                sample_weight *= np.exp(self.cost_ * estimator_weight * incorrect *
-                                        ((sample_weight > 0) | (estimator_weight < 0)))
+                sample_weight *= np.exp(-1. * self.cost_ * estimator_weight * incorrect)
             elif self.algorithm == "adac2":
-                sample_weight *= self.cost_ * np.exp(estimator_weight * incorrect *
-                                                     ((sample_weight > 0) | (estimator_weight < 0)))
+                sample_weight *= self.cost_ * np.exp(-1. * estimator_weight * incorrect )
             elif self.algorithm == "adac3":
-                sample_weight *= self.cost_ * np.exp(self.cost_ * estimator_weight * incorrect *
-                                                     ((sample_weight > 0) | (estimator_weight < 0)))
+                sample_weight *= self.cost_ * np.exp(-1. *self.cost_ * estimator_weight * incorrect)
             else:
                 raise ValueError("algorithm %s is not supported" % self.algorithm)
             
