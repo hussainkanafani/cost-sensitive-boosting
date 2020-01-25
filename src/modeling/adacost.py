@@ -195,9 +195,12 @@ class AdaCost(AdaBoostClassifier):
             self.cost_ = costs
         # Instances incorrectly classified
         incorrect = y_predict != y
-
+        # replace boolean values with -1 for mislcassified items and 1 for correctly classified,
+        # in order to easily update the sample weights 
+        correct_float= np.where(incorrect == False, 1., -1.)
+        
         # Error fraction
-        if self.algorithm == "adacost":
+        if self.algorithm == "adacost":                        
             estimator_error = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
         elif self.algorithm in ['adac1', 'adac2']:
             estimator_error = np.mean(np.average(incorrect, weights=sample_weight*self.cost_, axis=0))
@@ -222,7 +225,15 @@ class AdaCost(AdaBoostClassifier):
             return None, None, None
 
         # Boost weight based on algorithm (Nikolaou et al Mach Learn (2016) 104:359–384)
-        if self.algorithm == "adacost" or self.algorithm == "adac2":
+        if self.algorithm == "adacost":
+            beta = np.copy(self.cost_).astype(float)
+            beta[y == y_predict] = np.array(list(map(lambda x: -0.5 * x + 0.5, self.cost_[y == y_predict])))
+            beta[y != y_predict] = np.array(list(map(lambda x: 0.5 * x + 0.5, self.cost_[y != y_predict])))
+            u= beta * correct_float            
+            r=np.sum((sample_weight/np.sum(sample_weight)) * u)
+
+            estimator_weight = self.learning_rate * 0.5 * np.log((1. + r) / (1. - r))
+        elif self.algorithm == "adac2":
             estimator_weight = self.learning_rate * 0.5 * (
                 np.log((1. - estimator_error) / estimator_error))
         elif self.algorithm == "adac1":
@@ -230,28 +241,27 @@ class AdaCost(AdaBoostClassifier):
                 np.log((1 + (1. - estimator_error) - estimator_error) /
                        (1 - (1. - estimator_error) + estimator_error)))
         elif self.algorithm == "adac3":
+            c2d_truly_classified=np.sum(np.power(self.cost_[~ incorrect], 2)*sample_weight[~ incorrect]) 
+            c2d_misclassified=np.sum(np.power(self.cost_[incorrect], 2)*sample_weight[incorrect]) 
             estimator_weight = self.learning_rate * 0.5 * (
-                np.log((np.sum(sample_weight*self.cost_) + (1. - estimator_error) - estimator_error) /
-                       (np.sum(sample_weight*self.cost_) - (1. - estimator_error) + estimator_error)))
+                np.log(
+                    (np.sum(sample_weight*self.cost_) + c2d_truly_classified - c2d_misclassified) /
+                    (np.sum(sample_weight*self.cost_) - c2d_truly_classified + c2d_misclassified))
+            )
         # Only boost the weights if it will fit again
-        if iboost < self.n_estimators - 1:
-            # replace boolean values with -1 for mislcassified items and 1 for correctly classified,
-            # in order to easily update the sample weights 
-            incorrect= np.where(incorrect == False, 1., -1.)
-            
-            if self.algorithm == "adacost":
+        if iboost < self.n_estimators - 1:            
+            if self.algorithm == "adacost":                
                 beta = np.copy(self.cost_).astype(float)
                 beta[y == y_predict] = np.array(list(map(lambda x: -0.5 * x + 0.5, self.cost_[y == y_predict])))
                 beta[y != y_predict] = np.array(list(map(lambda x: 0.5 * x + 0.5, self.cost_[y != y_predict])))
                 # Only boost positive weights
-                sample_weight *= np.exp(beta * estimator_weight * incorrect *
-                                        ((sample_weight > 0) | (estimator_weight < 0)))
+                sample_weight *= np.exp(beta * estimator_weight * correct_float)
             elif self.algorithm == "adac1":
-                sample_weight *= np.exp(-1. * self.cost_ * estimator_weight * incorrect)
+                sample_weight *= np.exp(-1. * self.cost_ * estimator_weight * correct_float)
             elif self.algorithm == "adac2":
-                sample_weight *= self.cost_ * np.exp(-1. * estimator_weight * incorrect )
+                sample_weight *= self.cost_ * np.exp(-1. * estimator_weight * correct_float )
             elif self.algorithm == "adac3":
-                sample_weight *= self.cost_ * np.exp(-1. *self.cost_ * estimator_weight * incorrect)
+                sample_weight *= self.cost_ * np.exp(-1. *self.cost_ * estimator_weight * correct_float)
             else:
                 raise ValueError("algorithm %s is not supported" % self.algorithm)
             
