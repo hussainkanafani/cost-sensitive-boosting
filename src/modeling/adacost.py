@@ -228,8 +228,8 @@ class AdaCost(AdaBoostClassifier):
         # https://www.researchgate.net/publication/2628569_AdaCost_Misclassification_Cost-sensitive_Boosting
         if self.algorithm == "adacost":
             beta = np.copy(self.cost_).astype(float)
-            beta[y == y_predict] = np.array(list(map(lambda x: -0.5 * x + 0.5, self.cost_[y == y_predict])))
-            beta[y != y_predict] = np.array(list(map(lambda x: 0.5 * x + 0.5, self.cost_[y != y_predict])))
+            beta[y == y_predict] = np.array(list(map(lambda x: 0.5 * x + 0.5, self.cost_[y == y_predict])))
+            beta[y != y_predict] = np.array(list(map(lambda x: -0.5 * x + 0.5, self.cost_[y != y_predict])))
             u= beta * correct_float            
             r=np.sum(sample_weight * u)
 
@@ -260,8 +260,8 @@ class AdaCost(AdaBoostClassifier):
             # https://www.researchgate.net/publication/2628569_AdaCost_Misclassification_Cost-sensitive_Boosting
             if self.algorithm == "adacost":                
                 beta = np.copy(self.cost_).astype(float)
-                beta[y == y_predict] = np.array(list(map(lambda x: -0.5 * x + 0.5, self.cost_[y == y_predict])))
-                beta[y != y_predict] = np.array(list(map(lambda x: 0.5 * x + 0.5, self.cost_[y != y_predict])))
+                beta[y == y_predict] = np.array(list(map(lambda x: 0.5 * x + 0.5, self.cost_[y == y_predict])))
+                beta[y != y_predict] = np.array(list(map(lambda x: -0.5 * x + 0.5, self.cost_[y != y_predict])))
                 # Only boost positive weights              
                 nominator= sample_weight* np.exp(-1. * estimator_weight* correct_float * beta)
                 sample_weight = nominator / np.sum(nominator) 
