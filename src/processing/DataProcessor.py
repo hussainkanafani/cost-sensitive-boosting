@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.impute import KNNImputer
+from sklearn_pandas import CategoricalImputer
 
 class DataProcessor:
     def __init__(self, dataset_config, config, logger):
@@ -40,10 +41,10 @@ class DataProcessor:
         return self.data
 
     def split_labels_from_data(self):
-        trainX = self.data['train'].iloc[:, 1:]
-        trainY = self.data['train']['class']
-        testX = self.data['test'].iloc[:, 1:]
-        testY = self.data['test']['class']
+        trainX = self.data['train'].iloc[:, 1:].astype('float')
+        trainY = self.data['train']['class'].astype('float')
+        testX = self.data['test'].iloc[:, 1:].astype('float')
+        testY = self.data['test']['class'].astype('float')
 
         return {'trainY': trainY, 'trainX': trainX,
                 'testY': testY, 'testX': testX}
@@ -59,9 +60,10 @@ class DataProcessor:
         return self.data
 
     def impute_missing_values(self, columns):
-        imputer = KNNImputer(missing_values=-1, n_neighbors=1)
-        self.data = imputer.fit_transform(self.data)
-
+        #imputer = KNNImputer(missing_values=-1, n_neighbors=1)
+        imputer = CategoricalImputer(missing_values=-1, strategy='most_frequent')
+        self.data = imputer.fit_transform(self.data.to_numpy())
+    
         # converts numpy array to a pandas DataFrame
         self.data = pd.DataFrame(self.data, columns=columns)
         return self.data
