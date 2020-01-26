@@ -1,6 +1,9 @@
 import os
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.impute import KNNImputer
+from .impute import CategoricalImputer
 
 class DataProcessor:
     def __init__(self, dataset_config, config, logger):
@@ -10,7 +13,12 @@ class DataProcessor:
                                     config['dataProcessor']['dataDir'],
                                     self.dataset_config.filename)
         self.data = self.read_data(datasetPath)
-        self.data = self.ignore_missing_values()
+        columns = self.data.columns.tolist()
+
+        # replace question marks with -1 in order to fit KNNImputer
+        self.data = self.replace_question_marks()
+        self.data = self.impute_missing_values(columns)
+
         self.data = self.perform_one_hot_encoding()
         self.data = self.split_training_from_testing_set(config['dataProcessor']['testSetSize'])
         self.data = self.split_labels_from_data()
@@ -34,10 +42,10 @@ class DataProcessor:
         return self.data
 
     def split_labels_from_data(self):
-        trainX = self.data['train'].iloc[:, 1:]
-        trainY = self.data['train']['class']
-        testX = self.data['test'].iloc[:, 1:]
-        testY = self.data['test']['class']
+        trainX = self.data['train'].iloc[:, 1:].astype('float')
+        trainY = self.data['train']['class'].astype('float')
+        testX = self.data['test'].iloc[:, 1:].astype('float')
+        testY = self.data['test']['class'].astype('float')
 
         return {'trainY': trainY, 'trainX': trainX,
                 'testY': testY, 'testX': testX}
@@ -47,6 +55,19 @@ class DataProcessor:
         self.logger.info('Splitting data ...')
         train, test = train_test_split(self.data, test_size=testSetSize)
         return {'train': train, 'test': test}
+
+    def replace_question_marks(self):
+        self.data = self.data.replace('?', np.nan)
+        return self.data
+
+    def impute_missing_values(self, columns):
+        #imputer = KNNImputer(missing_values=-1, n_neighbors=1)
+        imputer = CategoricalImputer(missing_values=np.nan, strategy='most_frequent')
+        self.data = imputer.fit_transform(self.data)
+    
+        # converts numpy array to a pandas DataFrame
+        self.data = pd.DataFrame(self.data, columns=columns)
+        return self.data
 
     def ignore_missing_values(self):
         self.logger.info('Ignoring missing values ...')
