@@ -27,26 +27,28 @@ def main(config):
     start = .1
     end = 1.
     cost_setup = np.arange(start, end, step)
-    all_measures=dict()
+    all_measures = {}
 
-    for dataset in datasets:        
+    for dataset in datasets:
+
         # iterate over algorithms
         for algorithm in config.model.algorithms:             
-            all_measures[algorithm]=dict()
-            all_measures[algorithm]["fmeasures"]=[]
-            #all_measures[algorithm]["gmeans"]=[]
-            all_measures[algorithm]["precisions"]=[]
-            all_measures[algorithm]["recalls"]=[]
+            all_measures[algorithm] = {}
+            all_measures[algorithm]["fmeasures"] = []
+            all_measures[algorithm]["precisions"] = []
+            all_measures[algorithm]["recalls"] = []
+
             for experiment in range(n_experiments):
                 logger.info('Processing dataset {} ...'.format(dataset.filename))
-                dataProcessor = DataProcessor(dataset, config, logger)
+
                 # get splitted data
+                dataProcessor = DataProcessor(dataset, config, logger)
                 classes = classes_ordered_by_instances(dataProcessor.data['trainY'])
                                             
-                fmeasures=[]
-                #gmeans=[]
-                precisions=[]
-                recalls=[]               
+                fmeasures = []
+                precisions = []
+                recalls = []
+
                 for _cost in cost_setup:
                     class_weight = {
                     # minority class
@@ -54,32 +56,35 @@ def main(config):
                     # majority class
                     classes[1]: _cost
                     }
+
                     # create model
                     model = createClassifier(
                         algorithm, base_estimator, n_estimators, learning_rate, class_weight, np.random.randint(1000), tracker)
                     model_runner = ModelRunner(model, dataProcessor.data)
+
                     logger.info('Training algorithm {} ...'.format(algorithm))
                     # fit model
                     results[algorithm] = model_runner.run()
-                    # predicted values
-                    #logger.info('Predicted Values of X-test {}'.format(results[algorithm].tolist()))
-                    # predicted values
-                    #logger.info('True Values of X-test {}'.format(dataProcessor.data['testY'].tolist()))
-                    # evaluate model                    
-                    fmeasure,_,precision,recall = evaluate(dataProcessor.data['testY'].tolist(), results[algorithm].tolist())                    
+                    
+                    # evaluate
+                    fmeasure, _, precision, recall = evaluate(
+                                    dataProcessor.data['testY'].tolist(),
+                                    results[algorithm].tolist()
+                                    )
+
                     fmeasures.append(fmeasure)
                     precisions.append(precision)
                     recalls.append(recall)
-                    #gmeans.append(gmean)
+
                 # measures for all experiments
                 all_measures[algorithm]["fmeasures"].append(fmeasures)
                 all_measures[algorithm]["precisions"].append(precisions)
                 all_measures[algorithm]["recalls"].append(recalls)
-                #all_measures[algorithm]["gmeans"].append(gmeans)
-            #all_measures[algorithm]["avg_gmean"] = np.mean(all_measures[algorithm]["gmeans"],axis=0)
+
             all_measures[algorithm]["avg_fmeasure"] = np.mean(all_measures[algorithm]["fmeasures"],axis=0)                
             all_measures[algorithm]["avg_precision"] = np.mean(all_measures[algorithm]["precisions"],axis=0)
             all_measures[algorithm]["avg_recall"] = np.mean(all_measures[algorithm]["recalls"],axis=0)
+            
             logger.info("all_measures {}".format(all_measures))
             plot_cost_fmeasure_gmean(algorithm,cost_setup, all_measures[algorithm]["avg_fmeasure"], all_measures[algorithm]["avg_precision"],all_measures[algorithm]["avg_recall"]).show()
 
