@@ -4,9 +4,8 @@ import numpy as np
 from modeling.logger import Logger
 from processing.data_processor import DataProcessor
 from modeling.adacost import AdaCost
-from modeling.utils import createClassifier, classes_ordered_by_instances
+from modeling.utils import createClassifier, classes_ordered_by_instances, store_results
 from modeling.model_runner import ModelRunner
-from addict import Dict
 from modeling.evaluator import evaluate
 from modeling.visualiser import *
 
@@ -14,86 +13,112 @@ from modeling.visualiser import *
 def main(config):
     logger = Logger.createLogger(config['logger'])
     logger.info('Starting Application')
-    results = {}
-    base_estimator = config.model.base_estimator
-    n_estimators = config.model.n_estimators
-    learning_rate = config.model.learning_rate
-    random_state = config.model.random_state
-    datasets = config.dataProcessor.datasets
-    tracker = config.tracker
-    n_experiments= config.n_experiments
-    
-    step = .1
-    start = .1
-    end = 1.
-    cost_setup = np.arange(start, end, step)
+    cost_setup = np.arange(0.1, 1, 0.1)
+
+    for dataset in config['dataProcessor']['datasets']:
+        logger.info('Processing dataset {} ...'.format(dataset['filename']))
+
+        # iterate over algorithms (implicitly over experiments and costs)
+        all_measures, plots = loop_over_algorithms(dataset, cost_setup, logger, config)
+
+        if config['verbose']:
+            for plot in plots:
+                plot.show()
+
+        # store plots
+        store_results(dataset['filename'], list(all_measures.keys()), plots, config['app']['rootDir'])
+
+def loop_over_algorithms(dataset, cost_setup, logger, config):
     all_measures = {}
+    plots = []
 
-    for dataset in datasets:
+    for algorithm in config['model']['algorithms']:
+        logger.info('\tTraining algorithm {}'.format(algorithm))
+        
+        # iterate over experiments (implicitly costs)     
+        all_measures[algorithm] = loop_over_experiments(dataset, algorithm, cost_setup, logger, config)
 
-        # iterate over algorithms
-        for algorithm in config.model.algorithms:             
-            all_measures[algorithm] = {}
-            all_measures[algorithm]["fmeasures"] = []
-            all_measures[algorithm]["precisions"] = []
-            all_measures[algorithm]["recalls"] = []
+        all_measures[algorithm]["avg_fmeasure"] = np.mean(all_measures[algorithm]["fmeasures"], axis=0)                
+        all_measures[algorithm]["avg_precision"] = np.mean(all_measures[algorithm]["precisions"], axis=0)
+        all_measures[algorithm]["avg_recall"] = np.mean(all_measures[algorithm]["recalls"], axis=0)
+        
+        logger.info("algorithm {} summary: {}".format(algorithm, all_measures))
+        plot = plot_cost_fmeasure_gmean(
+                        algorithm,
+                        cost_setup, 
+                        all_measures[algorithm]["avg_fmeasure"], 
+                        all_measures[algorithm]["avg_precision"],
+                        all_measures[algorithm]["avg_recall"])
+        plots.append(plot)
+    
+    return all_measures, plots
 
-            for experiment in range(n_experiments):
-                logger.info('Processing dataset {} ...'.format(dataset.filename))
+def loop_over_experiments(dataset, algorithm, cost_setup, logger, config):
+    all_measures = {}
+    all_measures["fmeasures"] = []
+    all_measures["precisions"] = []
+    all_measures["recalls"] = []
 
-                # get splitted data
-                dataProcessor = DataProcessor(dataset, config, logger)
-                classes = classes_ordered_by_instances(dataProcessor.data['trainY'])
-                                            
-                fmeasures = []
-                precisions = []
-                recalls = []
+    for experiment in range(config['n_experiments']):
+        logger.info('\t\texperiment {}'.format(experiment))
+        # get splitted data
+        dataProcessor = DataProcessor(dataset, config, logger)
 
-                for _cost in cost_setup:
-                    class_weight = {
-                    # minority class
-                    classes[0]: 1,
-                    # majority class
-                    classes[1]: _cost
-                    }
+        # iterate over costs
+        fmeasures, precisions, recalls = loop_over_costs(algorithm, cost_setup, dataProcessor.data, logger, config)
 
-                    # create model
-                    model = createClassifier(
-                        algorithm, base_estimator, n_estimators, learning_rate, class_weight, np.random.randint(1000), tracker)
-                    model_runner = ModelRunner(model, dataProcessor.data)
+        # measures for all experiments
+        all_measures["fmeasures"].append(fmeasures)
+        all_measures["precisions"].append(precisions)
+        all_measures["recalls"].append(recalls)
 
-                    logger.info('Training algorithm {} ...'.format(algorithm))
-                    # fit model
-                    results[algorithm] = model_runner.run()
-                    
-                    # evaluate
-                    fmeasure, _, precision, recall = evaluate(
-                                    dataProcessor.data['testY'].tolist(),
-                                    results[algorithm].tolist()
-                                    )
+    return all_measures
 
-                    fmeasures.append(fmeasure)
-                    precisions.append(precision)
-                    recalls.append(recall)
+def loop_over_costs(algorithm, cost_setup, data, logger, config):
+    fmeasures = []
+    precisions = []
+    recalls = []
+    classes = classes_ordered_by_instances(data['trainY'])
 
-                # measures for all experiments
-                all_measures[algorithm]["fmeasures"].append(fmeasures)
-                all_measures[algorithm]["precisions"].append(precisions)
-                all_measures[algorithm]["recalls"].append(recalls)
+    for _cost in cost_setup:
+        class_weight = {
+        # minority class
+        classes[0]: 1,
+        # majority class
+        classes[1]: _cost
+        }
 
-            all_measures[algorithm]["avg_fmeasure"] = np.mean(all_measures[algorithm]["fmeasures"],axis=0)                
-            all_measures[algorithm]["avg_precision"] = np.mean(all_measures[algorithm]["precisions"],axis=0)
-            all_measures[algorithm]["avg_recall"] = np.mean(all_measures[algorithm]["recalls"],axis=0)
-            
-            logger.info("all_measures {}".format(all_measures))
-            plot_cost_fmeasure_gmean(algorithm,cost_setup, all_measures[algorithm]["avg_fmeasure"], all_measures[algorithm]["avg_precision"],all_measures[algorithm]["avg_recall"]).show()
+        # create model
+        model = createClassifier(
+            algorithm,
+            config['model']['base_estimator'],
+            config['model']['n_estimators'],
+            config['model']['learning_rate'],
+            class_weight,
+            np.random.randint(1000),
+            config['tracker'])
 
+        model_runner = ModelRunner(model, data)
+
+        logger.info('\t\t\tCost {}'.format(_cost))
+        predictions = model_runner.run()
+        
+        # evaluate
+        fmeasure, _, precision, recall = evaluate(
+                        data['testY'].tolist(),
+                        predictions.tolist()
+                        )
+
+        fmeasures.append(fmeasure)
+        precisions.append(precision)
+        recalls.append(recall)
+
+    return fmeasures, precisions, recalls
 
 def readAppConfigs():
     with open('./config-dev.json') as f:
         config = json.load(f)
-    config = Dict(config)
-    config.app.rootDir = os.path.dirname(
+    config['app']['rootDir'] = os.path.dirname(
         os.path.dirname(os.path.realpath(__file__)))
 
     return config
