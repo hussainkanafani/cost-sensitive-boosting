@@ -1,8 +1,8 @@
 import json
 import os
 import numpy as np
-from modeling.Logger import Logger
-from processing.DataProcessor import DataProcessor
+from modeling.logger import Logger
+from processing.data_processor import DataProcessor
 from modeling.adacost import AdaCost
 from modeling.utils import createClassifier, classes_ordered_by_instances
 from modeling.model_runner import ModelRunner
