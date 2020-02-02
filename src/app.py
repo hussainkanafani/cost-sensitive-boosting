@@ -19,18 +19,18 @@ def main(config):
         logger.info('Processing dataset {} ...'.format(dataset['filename']))
 
         # iterate over algorithms (implicitly over experiments and costs)
-        all_measures, plots = loop_over_algorithms(dataset, cost_setup, logger, config)
+        all_measures = loop_over_algorithms(dataset, cost_setup, logger, config)
 
         if config['verbose']:
-            for plot in plots:
-                plot.show()
+            for measure in all_measures.items():
+                measure[1]['plot'].show()
 
         # store plots
-        store_results(dataset['filename'], list(all_measures.keys()), plots, config['app']['rootDir'])
+        logger.info('Storing plots')
+        store_results(dataset['filename'], all_measures, config['app']['rootDir'])
 
 def loop_over_algorithms(dataset, cost_setup, logger, config):
     all_measures = {}
-    plots = []
 
     for algorithm in config['model']['algorithms']:
         logger.info('\tTraining algorithm {}'.format(algorithm))
@@ -41,17 +41,17 @@ def loop_over_algorithms(dataset, cost_setup, logger, config):
         all_measures[algorithm]["avg_fmeasure"] = np.mean(all_measures[algorithm]["fmeasures"], axis=0)                
         all_measures[algorithm]["avg_precision"] = np.mean(all_measures[algorithm]["precisions"], axis=0)
         all_measures[algorithm]["avg_recall"] = np.mean(all_measures[algorithm]["recalls"], axis=0)
-        
-        logger.info("algorithm {} summary: {}".format(algorithm, all_measures))
         plot = plot_cost_fmeasure_gmean(
                         algorithm,
                         cost_setup, 
                         all_measures[algorithm]["avg_fmeasure"], 
                         all_measures[algorithm]["avg_precision"],
                         all_measures[algorithm]["avg_recall"])
-        plots.append(plot)
+        all_measures[algorithm]["plot"] = plot
+
+        logger.info("algorithm {} summary: {}".format(algorithm, all_measures))
     
-    return all_measures, plots
+    return all_measures
 
 def loop_over_experiments(dataset, algorithm, cost_setup, logger, config):
     all_measures = {}
