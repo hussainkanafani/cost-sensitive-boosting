@@ -35,4 +35,4 @@ def store_results(dataset, all_measures, root_path):
     for measure in all_measures.items():
         file_name = '{}_{}.png'.format(dataset_name, measure[0])
         file_path = os.path.join(dataset_path, file_name)
-        measure[1]['plot'].savefig(file_path)
+        measure[1]['plot'].save(file_path)
