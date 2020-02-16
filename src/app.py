@@ -27,7 +27,17 @@ def main(config):
 
         # store plots
         logger.info('Storing plots')
-        store_results(dataset['filename'], all_measures, config['app']['rootDir'])
+        for measure in all_measures.items():
+            dataset_name = os.path.splitext(dataset['filename'])[0]
+            dir_path = os.path.join(config['app']['rootDir'], 'data', 'results', dataset_name, config['model']['base_estimator'])
+            file_name = '{}_{}'.format(dataset_name, measure[0])
+            pil_image = measure[1]['measures_plot']
+            store_results(dir_path, file_name, pil_image)
+            
+            dir_path = os.path.join(dir_path, measure[0] + '_tracker')
+            for i, tracker_plot in enumerate(measure[1]['tracker_plots']):
+                file_name = '{}_{}_iter_{}'.format(dataset_name, measure[0], i)
+                store_results(dir_path, file_name, tracker_plot)
 
 def loop_over_algorithms(dataset, cost_setup, logger, config):
     all_measures = {}
@@ -41,13 +51,26 @@ def loop_over_algorithms(dataset, cost_setup, logger, config):
         all_measures[algorithm]["avg_fmeasure"] = np.mean(all_measures[algorithm]["fmeasures"], axis=0)                
         all_measures[algorithm]["avg_precision"] = np.mean(all_measures[algorithm]["precisions"], axis=0)
         all_measures[algorithm]["avg_recall"] = np.mean(all_measures[algorithm]["recalls"], axis=0)
-        plot = plot_cost_fmeasure_gmean(
+        measures_plot = plot_cost_fmeasure_gmean(
                         algorithm,
                         cost_setup, 
                         all_measures[algorithm]["avg_fmeasure"], 
                         all_measures[algorithm]["avg_precision"],
                         all_measures[algorithm]["avg_recall"])
-        all_measures[algorithm]["plot"] = plot
+
+        # model tracker
+        with open(os.path.join(config['app']['rootDir'], 'src', 'temp', algorithm + '.json')) as f:
+            tracker_data = json.load(f)
+
+        tracker_plots = []
+        for iteration in tracker_data:
+            tracker_plot = plot_instances_classes_weights_in_iteration(all_measures[algorithm]['trainX'],
+                                                                    all_measures[algorithm]['trainY'].tolist(),
+                                                                    iteration['sample_weight'])
+            tracker_plots.append(tracker_plot)
+
+        all_measures[algorithm]["measures_plot"] = measures_plot
+        all_measures[algorithm]["tracker_plots"] = tracker_plots
 
         logger.info("algorithm {} summary: {}".format(algorithm, all_measures))
     
@@ -72,6 +95,9 @@ def loop_over_experiments(dataset, algorithm, cost_setup, logger, config):
         all_measures["precisions"].append(precisions)
         all_measures["recalls"].append(recalls)
 
+    all_measures["trainX"] = dataProcessor.data['trainX']
+    all_measures["trainY"] = dataProcessor.data['trainY']
+        
     return all_measures
 
 def loop_over_costs(algorithm, cost_setup, data, logger, config):
