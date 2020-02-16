@@ -36,3 +36,11 @@ def store_results(dataset, all_measures, root_path):
         file_name = '{}_{}.png'.format(dataset_name, measure[0])
         file_path = os.path.join(dataset_path, file_name)
         measure[1]['plot'].save(file_path)
+
+def store_results(dir_path, file_name, pil_image):
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+
+    file_name += '.png'
+    file_path = os.path.join(dir_path, file_name)
+    pil_image.save(file_path)
