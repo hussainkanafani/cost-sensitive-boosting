@@ -22,6 +22,7 @@ def plot_cost_fmeasure_gmean(algorithm,costs, fmeasues,precision,recall):
     return convert_plot_to_object(plt)
 
 def plot_instances_classes_weights_in_iteration(instances, classes, weights):
+    plt.clf()
     COLOR_MAP = 'RdBu'
     sns.set()
     instancesAfterPca = PCA(n_components=2).fit_transform(instances)
@@ -29,13 +30,13 @@ def plot_instances_classes_weights_in_iteration(instances, classes, weights):
     cmap = matplotlib.cm.get_cmap(COLOR_MAP)
     #plot type according to classes, color according to weight
     for i in range(len(instancesAfterPca)):
-        plt.plot(instancesAfterPca[i,0], instancesAfterPca[i,1], marker=markers[classes[i]], c=cmap(weights[i]))
+        plt.plot(instancesAfterPca[i,0], instancesAfterPca[i,1], marker=markers[int(classes[i])], c=cmap(weights[i]))
     #show legend
     plt.colorbar(plt.cm.ScalarMappable(cmap=cmap))
     plt.xlabel('PCA 1')
     plt.ylabel('PCA 2')
     #plt.show()
-    return plt
+    return convert_plot_to_object(plt)
 
 def convert_plot_to_object(plt):
     buf = io.BytesIO()
