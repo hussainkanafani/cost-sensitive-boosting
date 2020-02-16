@@ -11,7 +11,7 @@ class DataProcessor:
         self.dataset_config = dataset_config
         datasetPath = os.path.join(config['app']['rootDir'],
                                     config['dataProcessor']['dataDir'],
-                                    self.dataset_config.filename)
+                                    self.dataset_config['filename'])
         self.data = self.read_data(datasetPath)
         columns = self.data.columns.tolist()
 
@@ -28,7 +28,7 @@ class DataProcessor:
         return df
 
     def perform_one_hot_encoding(self):
-        for feature in self.dataset_config.categorical_features:
+        for feature in self.dataset_config['categorical_features']:
             unique_categories = self.get_unique_categories(feature)
 
             # create new is_category column for each unique category
@@ -52,7 +52,6 @@ class DataProcessor:
 
     def split_training_from_testing_set(self, testSetSize):
         # TODO: should it be a random construction ?
-        self.logger.info('Splitting data ...')
         train, test = train_test_split(self.data, test_size=testSetSize)
         return {'train': train, 'test': test}
 

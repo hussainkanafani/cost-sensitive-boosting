@@ -55,5 +55,6 @@
         "random_state": 0
     },
     "evaluator": {},
-    "tracker": true
+    "tracker": true,
+    "verbose": false
 }
