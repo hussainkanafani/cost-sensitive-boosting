@@ -8,9 +8,10 @@ temp_folder = "temp/"
 class ModelTracker():
 
     @staticmethod
-    def create_tracker(algorithm):
+    def create_tracker(algorithm, majority_cost):
         tracker = Dict()
         tracker.algorithm = algorithm
+        tracker.majority_cost = str(majority_cost)
         tracker.iterations = []
         return Dict(tracker)
 
@@ -20,7 +21,7 @@ class ModelTracker():
         if not os.path.exists(temp_folder):
             os.mkdir(temp_folder)
 
-        _file = temp_folder + obj.algorithm + '.json'
+        _file = os.path.join(temp_folder, obj.algorithm + '_' + obj.majority_cost + '.json')
         # make remove file if exists
         if os.path.exists(_file):
             os.remove(_file)

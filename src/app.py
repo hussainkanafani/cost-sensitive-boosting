@@ -23,7 +23,7 @@ def main(config):
 
         if config['verbose']:
             for measure in all_measures.items():
-                measure[1]['plot'].show()
+                measure[1]['measures_plot'].show()
 
         # store plots
         logger.info('Storing plots')
@@ -61,8 +61,11 @@ def loop_over_algorithms(dataset, cost_setup, logger, config):
                         all_measures[algorithm]["avg_precision"],
                         all_measures[algorithm]["avg_recall"])
 
-        # model tracker
-        with open(os.path.join(config['app']['rootDir'], 'src', 'temp', algorithm + '.json')) as f:
+        # tracker plot
+        # tracker weights plot for the cost 0.5
+        cost = '_0.5'
+        model_tracker_path = os.path.join(config['app']['rootDir'], 'src', 'temp', algorithm + cost +'.json')
+        with open(model_tracker_path) as f:
             tracker_data = json.load(f)
 
         tracker_plots = []
@@ -91,7 +94,8 @@ def loop_over_algorithms(dataset, cost_setup, logger, config):
         all_measures[algorithm]["tracker_plots"] = tracker_plots
         all_measures[algorithm]["tracker_weights_plot"] = plot_stacked_barchart_weights_iterations(minority_weight_sums,
                                                                                               majority_weight_sums,
-                                                                                              algorithm)
+                                                                                              algorithm,
+                                                                                              cost[1:])
 
         logger.info("algorithm {} summary: {}".format(algorithm, all_measures))
     
