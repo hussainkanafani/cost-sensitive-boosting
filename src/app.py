@@ -35,7 +35,7 @@ def main(config):
             store_results(dir_path, file_name, measure[1]['measures_plot'])
 
             file_name = '{}_{}_weights'.format(dataset_name, measure[0])
-            store_results(dir_path, file_name, measure[1]['tracker_avg_plot'])
+            store_results(dir_path, file_name, measure[1]['tracker_weights_plot'])
 
             dir_path = os.path.join(dir_path, measure[0] + '_tracker')
             for i, tracker_plot in enumerate(measure[1]['tracker_plots']):
@@ -69,8 +69,8 @@ def loop_over_algorithms(dataset, cost_setup, logger, config):
 
         # prepare for computing avgs
         sorted_classes = classes_ordered_by_instances(all_measures[algorithm]['trainY'])
-        minority_weight_avgs = []
-        majority_weight_avgs = []
+        minority_weight_sums = []
+        majority_weight_sums = []
 
         for iteration in tracker_data:
             sample_weight = np.array(iteration['sample_weight'])
@@ -84,13 +84,13 @@ def loop_over_algorithms(dataset, cost_setup, logger, config):
             majority_weights = sample_weight[ all_measures[algorithm]['trainY'] == sorted_classes[1] ]
 
             # computing avgs
-            minority_weight_avgs.append(np.mean(minority_weights))
-            majority_weight_avgs.append(np.mean(majority_weights))
+            minority_weight_sums.append(np.sum(minority_weights))
+            majority_weight_sums.append(np.sum(majority_weights))
 
         all_measures[algorithm]["measures_plot"] = measures_plot
         all_measures[algorithm]["tracker_plots"] = tracker_plots
-        all_measures[algorithm]["tracker_avg_plot"] = plot_stacked_barchart_weights_iterations(minority_weight_avgs,
-                                                                                              majority_weight_avgs,
+        all_measures[algorithm]["tracker_weights_plot"] = plot_stacked_barchart_weights_iterations(minority_weight_sums,
+                                                                                              majority_weight_sums,
                                                                                               algorithm)
 
         logger.info("algorithm {} summary: {}".format(algorithm, all_measures))

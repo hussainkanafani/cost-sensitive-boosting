@@ -38,18 +38,17 @@ def plot_instances_classes_weights_in_iteration(instances, classes, weights):
     #plt.show()
     return convert_plot_to_object(plt)
 
-def plot_stacked_barchart_weights_iterations(minority_weight_avgs, majority_weight_avgs, algorithm):
+def plot_stacked_barchart_weights_iterations(minority_weight_sums, majority_weight_sums, algorithm):
     plt.clf()
-    ind = np.arange(len(minority_weight_avgs))
+    ind = np.arange(len(minority_weight_sums))
     width = 0.35
-    p1 = plt.bar(ind, minority_weight_avgs, width=width, color='r')
-    p2 = plt.bar(ind, majority_weight_avgs, width=width,
-             bottom=minority_weight_avgs, color='b')
+    p1 = plt.bar(ind, minority_weight_sums, width=width, color='r')
+    p2 = plt.bar(ind, majority_weight_sums, width=width,
+             bottom=minority_weight_sums, color='b')
     plt.ylabel('Average Samples Weight')
     plt.xlabel('Iteration')
     plt.title(algorithm)
     plt.xticks(ind)
-    plt.yticks(np.arange(0, 0.05, 0.01))
     plt.legend((p1[0], p2[0]), ('Minority', 'Majority'))
 
     return convert_plot_to_object(plt)
