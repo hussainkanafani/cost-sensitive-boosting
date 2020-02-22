@@ -4,6 +4,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.impute import KNNImputer
 from .impute import CategoricalImputer
+from imblearn.over_sampling import RandomOverSampler
 
 class DataProcessor:
     def __init__(self, dataset_config, config, logger):
@@ -54,6 +55,14 @@ class DataProcessor:
         # TODO: should it be a random construction ?
         train, test = train_test_split(self.data, test_size=testSetSize)
         return {'train': train, 'test': test}
+
+    def imbalance_data_using_rate(self, data, rate):
+        randomOverSampler = RandomOverSampler(random_state=0)
+        train_X_resampled, train_y_resampled = randomOverSampler.fit_resample(data['trainX'], data['trainY'])
+        test_X_resampled, test_y_resampled = randomOverSampler.fit_resample(data['testX'], data['testY'])
+        return {'trainY': train_y_resampled, 'trainX': train_X_resampled,
+                'testY': test_y_resampled, 'testX': test_X_resampled}
+
 
     def replace_question_marks(self):
         self.data = self.data.replace('?', np.nan)
