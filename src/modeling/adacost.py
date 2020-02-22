@@ -202,7 +202,9 @@ class AdaCost(AdaBoostClassifier):
         correct_float= np.where(incorrect == False, 1., -1.)
         
         # Error fraction
-        if self.algorithm == "adacost":                        
+        if self.algorithm == "adaboost":
+            estimator_error = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
+        elif self.algorithm == "adacost":                        
             estimator_error = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
         elif self.algorithm in ['adac1', 'adac2']:
             estimator_error = np.mean(np.average(incorrect, weights=sample_weight*self.cost_, axis=0))
@@ -226,9 +228,15 @@ class AdaCost(AdaBoostClassifier):
                                  'can not be fit.')
             return None, None, None
 
+        if self.algorithm == "adaboost":            
+            c2d_truly_classified = np.sum(sample_weight[~ incorrect]) 
+            c2d_misclassified = np.sum(sample_weight[incorrect]) 
+
+            estimator_weight = self.learning_rate * 0.5 * np.log(c2d_truly_classified/c2d_misclassified)
+
         # AdaCost: Misclassiﬁcation Cost-sensitive Boosting
         # https://www.researchgate.net/publication/2628569_AdaCost_Misclassification_Cost-sensitive_Boosting
-        if self.algorithm == "adacost":
+        elif self.algorithm == "adacost":
             beta = np.copy(self.cost_).astype(float)
             beta[y == y_predict] = np.array(list(map(lambda x: 0.5 * x + 0.5, self.cost_[y == y_predict])))
             beta[y != y_predict] = np.array(list(map(lambda x: -0.5 * x + 0.5, self.cost_[y != y_predict])))
@@ -257,10 +265,16 @@ class AdaCost(AdaBoostClassifier):
                     (np.sum(sample_weight*self.cost_) + c2d_truly_classified - c2d_misclassified) /
                     (np.sum(sample_weight*self.cost_) - c2d_truly_classified + c2d_misclassified))
             )
+
+
         # Only boost the weights if it will fit again
-        if iboost < self.n_estimators - 1:            
+        if iboost <= self.n_estimators - 1:       
+            if self.algorithm =="adaboost":
+                nominator = sample_weight*np.exp(-1. * estimator_weight * correct_float)
+                sample_weight = nominator / np.sum(nominator)     
+                
             # https://www.researchgate.net/publication/2628569_AdaCost_Misclassification_Cost-sensitive_Boosting
-            if self.algorithm == "adacost":                
+            elif self.algorithm == "adacost":                
                 beta = np.copy(self.cost_).astype(float)
                 beta[y == y_predict] = np.array(list(map(lambda x: 0.5 * x + 0.5, self.cost_[y == y_predict])))
                 beta[y != y_predict] = np.array(list(map(lambda x: -0.5 * x + 0.5, self.cost_[y != y_predict])))
