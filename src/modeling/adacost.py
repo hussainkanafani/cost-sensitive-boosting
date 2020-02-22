@@ -64,7 +64,9 @@ class AdaCost(AdaBoostClassifier):
         self.class_weight = class_weight
         self.model_tracker = None
         if tracker:
-            self.model_tracker = ModelTracker.create_tracker(algorithm)
+            self.model_tracker = ModelTracker.create_tracker(algorithm, 
+                                            # get the second key value of the dict, which is the majority cost
+                                            self.class_weight[list(self.class_weight.keys())[1]])
 
     def fit(self, X, y, sample_weight=None):
         """
