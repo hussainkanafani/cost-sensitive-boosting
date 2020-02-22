@@ -6,10 +6,10 @@ import numpy as np
 import io
 from PIL import Image
 
-def plot_cost_fmeasure_gmean(algorithm,costs, fmeasues,precision,recall):
+def plot_cost_fmeasure_precision_recall(algorithm,costs, fmeasures,precision,recall):
     plt.clf()
     sns.set()
-    plt.plot(costs, fmeasues, '--bo', label='F-measure')
+    plt.plot(costs, fmeasures, '--bo', label='F-measure')
     plt.plot(costs, precision, '--go', label='Precision')
     plt.plot(costs, recall, '--ro', label='Recall')
     #plt.plot(costs, gmean, '--go', label='gmean')

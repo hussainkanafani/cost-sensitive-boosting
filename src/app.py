@@ -54,7 +54,7 @@ def loop_over_algorithms(dataset, cost_setup, logger, config):
         all_measures[algorithm]["avg_fmeasure"] = np.mean(all_measures[algorithm]["fmeasures"], axis=0)                
         all_measures[algorithm]["avg_precision"] = np.mean(all_measures[algorithm]["precisions"], axis=0)
         all_measures[algorithm]["avg_recall"] = np.mean(all_measures[algorithm]["recalls"], axis=0)
-        measures_plot = plot_cost_fmeasure_gmean(
+        measures_plot = plot_cost_fmeasure_precision_recall(
                         algorithm,
                         cost_setup, 
                         all_measures[algorithm]["avg_fmeasure"], 
