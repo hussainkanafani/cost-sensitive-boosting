@@ -38,6 +38,21 @@ def plot_instances_classes_weights_in_iteration(instances, classes, weights):
     #plt.show()
     return convert_plot_to_object(plt)
 
+def plot_stacked_barchart_weights_iterations(minority_weight_sums, majority_weight_sums, algorithm):
+    plt.clf()
+    ind = np.arange(len(minority_weight_sums))
+    width = 0.35
+    p1 = plt.bar(ind, minority_weight_sums, width=width, color='r')
+    p2 = plt.bar(ind, majority_weight_sums, width=width,
+             bottom=minority_weight_sums, color='b')
+    plt.ylabel('Average Samples Weight')
+    plt.xlabel('Iteration')
+    plt.title(algorithm)
+    plt.xticks(ind)
+    plt.legend((p1[0], p2[0]), ('Minority', 'Majority'))
+
+    return convert_plot_to_object(plt)
+
 def convert_plot_to_object(plt):
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
@@ -47,3 +62,4 @@ def convert_plot_to_object(plt):
 
     return im
 #plot_instances_classes_weights_in_iteration(np.random.randint(0,5,(10,5)),np.random.randint(0,6,10) , np.linspace(0,1,10))
+#plot_stacked_barchart_weights_iterations(np.array([0.1, 0.0002, 0.3]), np.array([0.005, 0.01, 0.2]), 'adac1')

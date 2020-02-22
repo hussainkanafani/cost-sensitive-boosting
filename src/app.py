@@ -30,10 +30,13 @@ def main(config):
         for measure in all_measures.items():
             dataset_name = os.path.splitext(dataset['filename'])[0]
             dir_path = os.path.join(config['app']['rootDir'], 'data', 'results', dataset_name, config['model']['base_estimator'])
-            file_name = '{}_{}'.format(dataset_name, measure[0])
-            pil_image = measure[1]['measures_plot']
-            store_results(dir_path, file_name, pil_image)
             
+            file_name = '{}_{}'.format(dataset_name, measure[0])
+            store_results(dir_path, file_name, measure[1]['measures_plot'])
+
+            file_name = '{}_{}_weights'.format(dataset_name, measure[0])
+            store_results(dir_path, file_name, measure[1]['tracker_weights_plot'])
+
             dir_path = os.path.join(dir_path, measure[0] + '_tracker')
             for i, tracker_plot in enumerate(measure[1]['tracker_plots']):
                 file_name = '{}_{}_iter_{}'.format(dataset_name, measure[0], i)
@@ -63,14 +66,32 @@ def loop_over_algorithms(dataset, cost_setup, logger, config):
             tracker_data = json.load(f)
 
         tracker_plots = []
+
+        # prepare for computing avgs
+        sorted_classes = classes_ordered_by_instances(all_measures[algorithm]['trainY'])
+        minority_weight_sums = []
+        majority_weight_sums = []
+
         for iteration in tracker_data:
+            sample_weight = np.array(iteration['sample_weight'])
             tracker_plot = plot_instances_classes_weights_in_iteration(all_measures[algorithm]['trainX'],
                                                                     all_measures[algorithm]['trainY'].tolist(),
-                                                                    iteration['sample_weight'])
+                                                                    sample_weight)
             tracker_plots.append(tracker_plot)
+
+            # splitting weights
+            minority_weights = sample_weight[ all_measures[algorithm]['trainY'] == sorted_classes[0] ]
+            majority_weights = sample_weight[ all_measures[algorithm]['trainY'] == sorted_classes[1] ]
+
+            # computing avgs
+            minority_weight_sums.append(np.sum(minority_weights))
+            majority_weight_sums.append(np.sum(majority_weights))
 
         all_measures[algorithm]["measures_plot"] = measures_plot
         all_measures[algorithm]["tracker_plots"] = tracker_plots
+        all_measures[algorithm]["tracker_weights_plot"] = plot_stacked_barchart_weights_iterations(minority_weight_sums,
+                                                                                              majority_weight_sums,
+                                                                                              algorithm)
 
         logger.info("algorithm {} summary: {}".format(algorithm, all_measures))
     

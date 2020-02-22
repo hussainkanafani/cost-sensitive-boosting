@@ -25,18 +25,6 @@ def classes_ordered_by_instances(data):
     sorted_classes=keys
     return sorted_classes
 
-def store_results(dataset, all_measures, root_path):
-    dataset_name = os.path.splitext(dataset)[0]
-    dataset_path = os.path.join(root_path, 'data', 'results', dataset_name)
-
-    if not os.path.exists(dataset_path):
-        os.makedirs(dataset_path)
-
-    for measure in all_measures.items():
-        file_name = '{}_{}.png'.format(dataset_name, measure[0])
-        file_path = os.path.join(dataset_path, file_name)
-        measure[1]['plot'].save(file_path)
-
 def store_results(dir_path, file_name, pil_image):
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)

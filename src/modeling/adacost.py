@@ -278,15 +278,15 @@ class AdaCost(AdaBoostClassifier):
                 raise ValueError("algorithm %s is not supported" % self.algorithm)
             
             
-            if self.model_tracker:
-                self.model_tracker.iterations.append(
-                {
-                        "sample_weight": sample_weight.tolist(),
-                        "class_costs": self.cost_.tolist(),
-                        "estimator_weight": estimator_weight,
-                        "gamma": self.learning_rate,
-                        "estimator_error": estimator_error
-                })
+        if self.model_tracker:
+            self.model_tracker.iterations.append(
+            {
+                    "sample_weight": sample_weight.tolist(),
+                    "class_costs": self.cost_.tolist(),
+                    "estimator_weight": estimator_weight,
+                    "gamma": self.learning_rate,
+                    "estimator_error": estimator_error
+            })
             
             
         return sample_weight, estimator_weight, estimator_error
