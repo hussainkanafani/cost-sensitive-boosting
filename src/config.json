@@ -56,5 +56,6 @@
     },
     "evaluator": {},
     "tracker": true,
-    "verbose": false
+    "verbose": false,
+    "imbalance_ratio": true
 }
