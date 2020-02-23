@@ -57,7 +57,7 @@ class DataProcessor:
         return {'train': train, 'test': test}
 
     def imbalance_data_using_rate(self, data, rate):
-        randomOverSampler = RandomOverSampler(random_state=0)
+        randomOverSampler = RandomOverSampler(sampling_strategy=rate)
         train_X_resampled, train_y_resampled = randomOverSampler.fit_resample(data['trainX'], data['trainY'])
         test_X_resampled, test_y_resampled = randomOverSampler.fit_resample(data['testX'], data['testY'])
         return {'trainY': train_y_resampled, 'trainX': train_X_resampled,
