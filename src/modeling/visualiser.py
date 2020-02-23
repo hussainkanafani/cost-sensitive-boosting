@@ -25,7 +25,8 @@ def plot_fmeasure_imbalance_ratios(algorithm, ratios_setup, ratios_cost_setup, f
 
     for i in range(len(ratios_cost_setup)):
         plt.plot(ratios_setup, fmeasures[i], '--o', label='Cost {}'.format(ratios_cost_setup[i]))
-
+        
+    plt.legend(loc="upper left")
     plt.ylim(0,1)
     plt.xlabel('Imbalance Ratio')    
     plt.ylabel('F-measure')

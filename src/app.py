@@ -14,7 +14,7 @@ def main(config):
     logger = Logger.createLogger(config['logger'])
     logger.info('Starting Application')
     cost_setup = np.around(np.arange(0.1, 1, 0.1), decimals=1)
-    ratio_setup = np.around(np.arange(0.6, 0.8, 0.2), decimals=1)
+    ratio_setup = np.around(np.arange(0.1, 1, 0.1), decimals=1)
     ratios_cost_setup = np.around(np.arange(0.1, 1, 0.2), decimals=1)
 
     for dataset in config['dataProcessor']['datasets']:
@@ -57,11 +57,13 @@ def loop_over_algorithms(dataset, cost_setup, ratio_setup, ratios_cost_setup, lo
 
         if config['imbalance_ratio']:
             # it has been iterated over ratios
-            all_measures[algorithm]["avg_ratios_fmeasures"] = np.swapaxes(np.mean(all_measures[algorithm]["ratios_fmeasures"],
-                                                                             axis=0),
-                                                                             0, 1)
-            ratios_plot = plot_fmeasure_imbalance_ratios(algorithm, 
-                                                        ratio_setup,
+            all_measures[algorithm]["avg_ratios_fmeasures"] = np.swapaxes(np.mean(
+                                                                            np.array(
+                                                                            all_measures[algorithm]["ratios_fmeasures"]),
+                                                                            axis=0),
+                                                                            0, 1)
+            ratios_plot = plot_fmeasure_imbalance_ratios(algorithm,
+                                                        all_measures[algorithm]["ratios_accepted"],
                                                         ratios_cost_setup,
                                                         all_measures[algorithm]["avg_ratios_fmeasures"])
             all_measures[algorithm]["ratios_plot"] = ratios_plot
@@ -123,6 +125,7 @@ def loop_over_experiments(dataset, algorithm, cost_setup, ratio_setup, ratios_co
     all_measures["fmeasures"] = []
     all_measures["precisions"] = []
     all_measures["recalls"] = []
+    all_ratios_accepted = []
 
     for experiment in range(config['n_experiments']):
         logger.info('\t\texperiment {}'.format(experiment))
@@ -131,10 +134,11 @@ def loop_over_experiments(dataset, algorithm, cost_setup, ratio_setup, ratios_co
 
         if config['imbalance_ratio']:
             # iterate over ratios
-            ratios_fmeasures = loop_over_ratios(algorithm, ratio_setup, ratios_cost_setup, dataProcessor, logger, config)
+            ratios_fmeasures, ratios_accepted = loop_over_ratios(algorithm, ratio_setup, ratios_cost_setup, dataProcessor, logger, config)
 
             # fmeasures for all ratios
             all_measures["ratios_fmeasures"].append(ratios_fmeasures)
+            all_ratios_accepted.append(ratios_accepted)
         else: 
             # iterate over costs
             fmeasures, precisions, recalls = loop_over_costs(algorithm, cost_setup, dataProcessor.data, logger, config)
@@ -146,7 +150,13 @@ def loop_over_experiments(dataset, algorithm, cost_setup, ratio_setup, ratios_co
 
     all_measures["trainX"] = dataProcessor.data['trainX']
     all_measures["trainY"] = dataProcessor.data['trainY']
-        
+
+    if config['imbalance_ratio']:
+        # drop experiments where there is less number of ratios experimented
+        max_length = len(max(all_measures["ratios_fmeasures"], key=len))
+        all_measures["ratios_fmeasures"] = [x for x in all_measures["ratios_fmeasures"] if len(x) == max_length]
+        all_measures["ratios_accepted"] = max(all_ratios_accepted, key=len)
+
     return all_measures
 
 def loop_over_costs(algorithm, cost_setup, data, logger, config):
@@ -193,16 +203,18 @@ def loop_over_costs(algorithm, cost_setup, data, logger, config):
 def loop_over_ratios(algorithm, ratio_setup, ratios_cost_setup, dataProcessor, logger, config):
     
     ratios_fmeasures = []
-
+    ratios_accepted = []
     for ratio in ratio_setup:
-
-        data = dataProcessor.imbalance_data_using_rate(dataProcessor.data, ratio)
-        classes = classes_ordered_by_instances(data['trainY'])
-
+        try:
+            data = dataProcessor.imbalance_data_using_rate(dataProcessor.data, ratio)
+            ratios_accepted.append(ratio)
+        except:
+            continue
 
         logger.info('\t\tRatio {}'.format(ratio))
-        fmeasures = []
 
+        fmeasures = []
+        classes = classes_ordered_by_instances(data['trainY'])
         for cost in ratios_cost_setup:
             
             class_weight = {
@@ -235,7 +247,7 @@ def loop_over_ratios(algorithm, ratio_setup, ratios_cost_setup, dataProcessor, l
 
             fmeasures.append(fmeasure)
         ratios_fmeasures.append(fmeasures)
-    return ratios_fmeasures
+    return ratios_fmeasures, sorted(list(set(ratios_accepted)))
 
 def readAppConfigs():
     with open('./config-dev.json') as f:
