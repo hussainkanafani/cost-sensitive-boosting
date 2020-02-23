@@ -6,19 +6,31 @@ import numpy as np
 import io
 from PIL import Image
 
-def plot_cost_fmeasure_gmean(algorithm,costs, fmeasues,precision,recall):
+def plot_cost_fmeasure_precision_recall(algorithm,costs, fmeasures,precision,recall):
     plt.clf()
     sns.set()
-    plt.plot(costs, fmeasues, '--bo', label='F-measure')
+    plt.plot(costs, fmeasures, '--bo', label='F-measure')
     plt.plot(costs, precision, '--go', label='Precision')
     plt.plot(costs, recall, '--ro', label='Recall')
-    #plt.plot(costs, gmean, '--go', label='gmean')
     plt.legend(loc="upper left")
     plt.ylim(0,1)
     plt.xlabel('Cost Setup')    
     plt.ylabel('Metric Value')
     plt.title(algorithm)
-    #plt.show()
+    return convert_plot_to_object(plt)
+
+def plot_fmeasure_imbalance_ratios(algorithm, ratios_setup, ratios_cost_setup, fmeasures):
+    plt.clf()
+    sns.set()
+
+    for i in range(len(ratios_cost_setup)):
+        plt.plot(ratios_setup, fmeasures[i], '--o', label='Cost {}'.format(ratios_cost_setup[i]))
+        
+    plt.legend(loc="upper left")
+    plt.ylim(0,1)
+    plt.xlabel('Imbalance Ratio')    
+    plt.ylabel('F-measure')
+    plt.title(algorithm)
     return convert_plot_to_object(plt)
 
 def plot_instances_classes_weights_in_iteration(instances, classes, weights):
