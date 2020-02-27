@@ -1,6 +1,7 @@
-# Cost-sensitive boosting for classification of imbalanced data
+# Cost-sensitive Boosting for Classification of Imbalanced Data
+This work aims to reproduce the results of the cost-sensitive boosting approaches presented by the [paper](https://sci2s.ugr.es/keel/pdf/specific/articulo/sun2007a.pdf)
 
-## Students
+## Project Members
 * Omar Arab Oghli
 * Hussain Kanafani
 * Muaid Mughrabi
@@ -49,4 +50,6 @@ The `config.json` file must be stored in the same directory where the `app.py` i
 ```
 
 ## References
-Click [here](https://gitlab.com/omar.araboghli/cost-sensitive-boosting/-/tree/master/documents) to take a look on our presentations, poster, and the paper we based on.
+* [Paper](https://sci2s.ugr.es/keel/pdf/specific/articulo/sun2007a.pdf)
+* Our source code based on this [implementation](https://github.com/gkapatai/MaatPy)
+* Click [here](https://gitlab.com/omar.araboghli/cost-sensitive-boosting/-/tree/master/documents) to take a look on our presentations, poster, and the paper we based on.
