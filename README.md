@@ -10,7 +10,7 @@ This work aims to reproduce the results of the cost-sensitive boosting approache
 ```
 git clone https://gitlab.com/omar.araboghli/cost-sensitive-boosting.git
 cd cost-sensitive-boosting
-pip install requirements.txt
+pip install -r requirements.txt
 python src/app.py
 ```
 
