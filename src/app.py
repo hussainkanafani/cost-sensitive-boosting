@@ -176,7 +176,7 @@ def loop_over_costs(algorithm, data, logger, config):
         predictions = model_runner.run()
         
         # evaluate
-        fmeasure, _, precision, recall = evaluate(
+        fmeasure, precision, recall = evaluate(
                         data['testY'].tolist(),
                         predictions.tolist()
                         )
@@ -228,7 +228,7 @@ def loop_over_ratios(algorithm, dataProcessor, logger, config):
             predictions = model_runner.run()
             
             # evaluate
-            fmeasure, _, _, _ = evaluate(
+            fmeasure, _, _ = evaluate(
                             data['testY'].tolist(),
                             predictions.tolist()
                             )
