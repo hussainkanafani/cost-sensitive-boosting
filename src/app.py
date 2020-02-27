@@ -87,6 +87,7 @@ def loop_over_algorithms(dataset, logger, config):
             for iteration in tracker_data:
                 # splitting weights
                 # take weights of the instances that belongs to the minority or to the majority class
+                sample_weight = np.array(iteration['sample_weight'])
                 minority_weights = sample_weight[ all_measures[algorithm]['trainY'] == sorted_classes[0] ]
                 majority_weights = sample_weight[ all_measures[algorithm]['trainY'] == sorted_classes[1] ]
 
