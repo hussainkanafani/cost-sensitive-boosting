@@ -7,7 +7,7 @@
 
 ## How to Run
 ```
-git clone ....
+git clone https://gitlab.com/omar.araboghli/cost-sensitive-boosting.git
 cd cost-sensitive-boosting
 pip install requirements.txt
 python src/app.py
@@ -47,3 +47,6 @@ The `config.json` file must be stored in the same directory where the `app.py` i
     }
 }
 ```
+
+## References
+Click [here](https://gitlab.com/omar.araboghli/cost-sensitive-boosting/-/tree/master/documents) to take a look on our presentations, poster, and the paper we based on.
