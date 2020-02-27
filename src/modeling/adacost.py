@@ -29,8 +29,7 @@ class AdaCost(AdaBoostClassifier):
                  learning_rate=1.,
                  algorithm=None,
                  class_weight='balanced',
-                 random_state=None,
-                 tracker = None):
+                 random_state=None):
         """
 
         :param base_estimator: object, optional (default=DecisionTreeClassifier)
@@ -62,11 +61,9 @@ class AdaCost(AdaBoostClassifier):
 
         self.algorithm = algorithm
         self.class_weight = class_weight
-        self.model_tracker = None
-        if tracker:
-            self.model_tracker = ModelTracker.create_tracker(algorithm, 
-                                            # get the second key value of the dict, which is the majority cost
-                                            self.class_weight[list(self.class_weight.keys())[1]])
+        self.model_tracker = ModelTracker.create_tracker(algorithm, 
+                                        # get the second key value of the dict, which is the majority cost
+                                        self.class_weight[list(self.class_weight.keys())[1]])
 
     def fit(self, X, y, sample_weight=None):
         """

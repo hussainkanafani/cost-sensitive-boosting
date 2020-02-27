@@ -4,6 +4,7 @@ class CategoricalImputer:
         self.strategy = strategy
 
     def fit_transform(self, df):
+        """ impute a missing value with the most frequent value in the same column """
         for column in df.columns:
             frequent = df[column].mode(dropna=True)[0]
             df[column].replace(to_replace=self.missing_values, value=frequent, inplace=True)

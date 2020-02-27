@@ -13,15 +13,12 @@ from modeling.visualiser import *
 def main(config):
     logger = Logger.createLogger(config['logger'])
     logger.info('Starting Application')
-    cost_setup = np.around(np.arange(0.1, 1, 0.1), decimals=1)
-    ratio_setup = np.around(np.arange(0.1, 1, 0.1), decimals=1)
-    ratios_cost_setup = np.around(np.arange(0.1, 1, 0.2), decimals=1)
 
     for dataset in config['dataProcessor']['datasets']:
         logger.info('Processing dataset {} ...'.format(dataset['filename']))
 
         # iterate over algorithms (implicitly over experiments and costs)
-        all_measures = loop_over_algorithms(dataset, cost_setup, ratio_setup, ratios_cost_setup, logger, config)
+        all_measures = loop_over_algorithms(dataset, logger, config)
 
         # store plots
         logger.info('Storing plots')
@@ -29,33 +26,28 @@ def main(config):
             dataset_name = os.path.splitext(dataset['filename'])[0]
             dir_path = os.path.join(config['app']['rootDir'], 'data', 'results', dataset_name, config['model']['base_estimator'])
 
-            if config['imbalance_ratio']:
+            if config['app']['imbalance_ratio']:
                 # it has been iterated over ratios
-                file_name = '{}_{}_ratios'.format(dataset_name, measure[0])
+                file_name = '{}_{}_measures_vs_ratios'.format(dataset_name, measure[0])
                 store_results(dir_path, file_name, measure[1]['ratios_plot'])
             else:
                 # it has been iterated over costs
-                file_name = '{}_{}'.format(dataset_name, measure[0])
+                file_name = '{}_{}_measures_vs_costs'.format(dataset_name, measure[0])
                 store_results(dir_path, file_name, measure[1]['measures_plot'])
 
-                file_name = '{}_{}_weights'.format(dataset_name, measure[0])
+                file_name = '{}_{}_weights_vs_iterations'.format(dataset_name, measure[0])
                 store_results(dir_path, file_name, measure[1]['tracker_weights_plot'])
 
-                dir_path = os.path.join(dir_path, measure[0] + '_tracker')
-                for i, tracker_plot in enumerate(measure[1]['tracker_plots']):
-                    file_name = '{}_{}_iter_{}'.format(dataset_name, measure[0], i)
-                    store_results(dir_path, file_name, tracker_plot)
-
-def loop_over_algorithms(dataset, cost_setup, ratio_setup, ratios_cost_setup, logger, config):
+def loop_over_algorithms(dataset, logger, config):
     all_measures = {}
 
     for algorithm in config['model']['algorithms']:
         logger.info('\tTraining algorithm {}'.format(algorithm))
         
         # iterate over experiments (implicitly costs)     
-        all_measures[algorithm] = loop_over_experiments(dataset, algorithm, cost_setup, ratio_setup, ratios_cost_setup, logger, config)
+        all_measures[algorithm] = loop_over_experiments(dataset, algorithm, logger, config)
 
-        if config['imbalance_ratio']:
+        if config['app']['imbalance_ratio']:
             # it has been iterated over ratios
             all_measures[algorithm]["avg_ratios_fmeasures"] = np.swapaxes(np.mean(
                                                                             np.array(
@@ -74,34 +66,28 @@ def loop_over_algorithms(dataset, cost_setup, ratio_setup, ratios_cost_setup, lo
             all_measures[algorithm]["avg_recall"] = np.mean(all_measures[algorithm]["recalls"], axis=0)
             measures_plot = plot_cost_fmeasure_precision_recall(
                             algorithm,
-                            cost_setup, 
+                            config['app']['cost_setup'], 
                             all_measures[algorithm]["avg_fmeasure"], 
                             all_measures[algorithm]["avg_precision"],
                             all_measures[algorithm]["avg_recall"])
             all_measures[algorithm]["measures_plot"] = measures_plot
 
-            # tracker plot
             # tracker weights plot for the cost 0.5
+            # reads the weights of the trained algorithm in the last experiment from the dumped file in temp/
             cost = '_0.5'
             model_tracker_path = os.path.join(config['app']['rootDir'], 'src', 'temp', algorithm + cost +'.json')
             with open(model_tracker_path) as f:
                 tracker_data = json.load(f)
 
-            tracker_plots = []
-
-            # prepare for computing avgs
+            # prepare for computing sums
             sorted_classes = classes_ordered_by_instances(all_measures[algorithm]['trainY'])
             minority_weight_sums = []
             majority_weight_sums = []
 
             for iteration in tracker_data:
-                sample_weight = np.array(iteration['sample_weight'])
-                tracker_plot = plot_instances_classes_weights_in_iteration(all_measures[algorithm]['trainX'],
-                                                                        all_measures[algorithm]['trainY'].tolist(),
-                                                                        sample_weight)
-                tracker_plots.append(tracker_plot)
-
                 # splitting weights
+                # take weights of the instances that belongs to the minority or to the majority class
+                sample_weight = np.array(iteration['sample_weight'])
                 minority_weights = sample_weight[ all_measures[algorithm]['trainY'] == sorted_classes[0] ]
                 majority_weights = sample_weight[ all_measures[algorithm]['trainY'] == sorted_classes[1] ]
 
@@ -109,7 +95,6 @@ def loop_over_algorithms(dataset, cost_setup, ratio_setup, ratios_cost_setup, lo
                 minority_weight_sums.append(np.sum(minority_weights))
                 majority_weight_sums.append(np.sum(majority_weights))
 
-            all_measures[algorithm]["tracker_plots"] = tracker_plots
             all_measures[algorithm]["tracker_weights_plot"] = plot_stacked_barchart_weights_iterations(minority_weight_sums,
                                                                                                 majority_weight_sums,
                                                                                                 algorithm,
@@ -119,29 +104,31 @@ def loop_over_algorithms(dataset, cost_setup, ratio_setup, ratios_cost_setup, lo
     
     return all_measures
 
-def loop_over_experiments(dataset, algorithm, cost_setup, ratio_setup, ratios_cost_setup, logger, config):
+def loop_over_experiments(dataset, algorithm, logger, config):
     all_measures = {}
     all_measures["ratios_fmeasures"] = []
     all_measures["fmeasures"] = []
     all_measures["precisions"] = []
     all_measures["recalls"] = []
+    
+    # some ratios are not accepted by all datasets splits, because of the randomness and the very big/small size of the split
     all_ratios_accepted = []
 
-    for experiment in range(config['n_experiments']):
+    for experiment in range(config['app']['n_experiments']):
         logger.info('\t\texperiment {}'.format(experiment))
         # get splitted data
         dataProcessor = DataProcessor(dataset, config, logger)
 
-        if config['imbalance_ratio']:
+        if config['app']['imbalance_ratio']:
             # iterate over ratios
-            ratios_fmeasures, ratios_accepted = loop_over_ratios(algorithm, ratio_setup, ratios_cost_setup, dataProcessor, logger, config)
+            ratios_fmeasures, ratios_accepted = loop_over_ratios(algorithm, dataProcessor, logger, config)
 
             # fmeasures for all ratios
             all_measures["ratios_fmeasures"].append(ratios_fmeasures)
             all_ratios_accepted.append(ratios_accepted)
         else: 
             # iterate over costs
-            fmeasures, precisions, recalls = loop_over_costs(algorithm, cost_setup, dataProcessor.data, logger, config)
+            fmeasures, precisions, recalls = loop_over_costs(algorithm, dataProcessor.data, logger, config)
 
             # measures for all experiments
             all_measures["fmeasures"].append(fmeasures)
@@ -151,7 +138,7 @@ def loop_over_experiments(dataset, algorithm, cost_setup, ratio_setup, ratios_co
     all_measures["trainX"] = dataProcessor.data['trainX']
     all_measures["trainY"] = dataProcessor.data['trainY']
 
-    if config['imbalance_ratio']:
+    if config['app']['imbalance_ratio']:
         # drop experiments where there is less number of ratios experimented
         max_length = len(max(all_measures["ratios_fmeasures"], key=len))
         all_measures["ratios_fmeasures"] = [x for x in all_measures["ratios_fmeasures"] if len(x) == max_length]
@@ -159,18 +146,18 @@ def loop_over_experiments(dataset, algorithm, cost_setup, ratio_setup, ratios_co
 
     return all_measures
 
-def loop_over_costs(algorithm, cost_setup, data, logger, config):
+def loop_over_costs(algorithm, data, logger, config):
     fmeasures = []
     precisions = []
     recalls = []
     classes = classes_ordered_by_instances(data['trainY'])
 
-    for _cost in cost_setup:
+    for cost in config['app']['cost_setup']:
         class_weight = {
         # minority class
         classes[0]: 1,
         # majority class
-        classes[1]: _cost
+        classes[1]: cost
         }
 
         # create model
@@ -180,16 +167,16 @@ def loop_over_costs(algorithm, cost_setup, data, logger, config):
             config['model']['n_estimators'],
             config['model']['learning_rate'],
             class_weight,
-            np.random.randint(1000),
-            config['tracker'])
+            np.random.randint(1000)
+            )
 
         model_runner = ModelRunner(model, data)
 
-        logger.info('\t\t\t\tCost {}'.format(_cost))
+        logger.info('\t\t\t\tCost {}'.format(cost))
         predictions = model_runner.run()
         
         # evaluate
-        fmeasure, _, precision, recall = evaluate(
+        fmeasure, precision, recall = evaluate(
                         data['testY'].tolist(),
                         predictions.tolist()
                         )
@@ -200,22 +187,23 @@ def loop_over_costs(algorithm, cost_setup, data, logger, config):
 
     return fmeasures, precisions, recalls
 
-def loop_over_ratios(algorithm, ratio_setup, ratios_cost_setup, dataProcessor, logger, config):
-    
+def loop_over_ratios(algorithm, dataProcessor, logger, config):
     ratios_fmeasures = []
     ratios_accepted = []
-    for ratio in ratio_setup:
+
+    for ratio in config['app']['ratio_setup']:
         try:
             data = dataProcessor.imbalance_data_using_rate(dataProcessor.data, ratio)
             ratios_accepted.append(ratio)
         except:
+            # simply throw unaccepted ratios
             continue
 
         logger.info('\t\tRatio {}'.format(ratio))
 
         fmeasures = []
         classes = classes_ordered_by_instances(data['trainY'])
-        for cost in ratios_cost_setup:
+        for cost in config['app']['ratio_cost_setup']:
             
             class_weight = {
                 # minority class
@@ -231,8 +219,8 @@ def loop_over_ratios(algorithm, ratio_setup, ratios_cost_setup, dataProcessor, l
                 config['model']['n_estimators'],
                 config['model']['learning_rate'],
                 class_weight,
-                np.random.randint(1000),
-                config['tracker'])
+                np.random.randint(1000)
+                )
 
             model_runner = ModelRunner(model, data)
 
@@ -240,7 +228,7 @@ def loop_over_ratios(algorithm, ratio_setup, ratios_cost_setup, dataProcessor, l
             predictions = model_runner.run()
             
             # evaluate
-            fmeasure, _, _, _ = evaluate(
+            fmeasure, _, _ = evaluate(
                             data['testY'].tolist(),
                             predictions.tolist()
                             )
@@ -250,20 +238,12 @@ def loop_over_ratios(algorithm, ratio_setup, ratios_cost_setup, dataProcessor, l
     return ratios_fmeasures, sorted(list(set(ratios_accepted)))
 
 def readAppConfigs():
-    with open('./config-dev.json') as f:
+    with open('./config.json') as f:
         config = json.load(f)
     config['app']['rootDir'] = os.path.dirname(
         os.path.dirname(os.path.realpath(__file__)))
 
     return config
-
-
-def get_measures_by_name(measures, name):
-    res = []
-    for element in measures:
-        res.append(element[name])
-    return res
-
 
 if __name__ == "__main__":
     main(readAppConfigs())
