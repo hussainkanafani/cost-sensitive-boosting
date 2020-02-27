@@ -56,7 +56,7 @@ def loop_over_algorithms(dataset, logger, config):
                                                                             0, 1)
             ratios_plot = plot_fmeasure_imbalance_ratios(algorithm,
                                                         all_measures[algorithm]["ratios_accepted"],
-                                                        ratios_cost_setup,
+                                                        config['app']['ratios_cost_setup'],
                                                         all_measures[algorithm]["avg_ratios_fmeasures"])
             all_measures[algorithm]["ratios_plot"] = ratios_plot
         else:
@@ -167,7 +167,8 @@ def loop_over_costs(algorithm, data, logger, config):
             config['model']['n_estimators'],
             config['model']['learning_rate'],
             class_weight,
-            np.random.randint(1000)
+            np.random.randint(1000),
+            config['app']['rootDir']
             )
 
         model_runner = ModelRunner(model, data)
@@ -203,7 +204,7 @@ def loop_over_ratios(algorithm, dataProcessor, logger, config):
 
         fmeasures = []
         classes = classes_ordered_by_instances(data['trainY'])
-        for cost in config['app']['ratio_cost_setup']:
+        for cost in config['app']['ratios_cost_setup']:
             
             class_weight = {
                 # minority class
@@ -219,7 +220,8 @@ def loop_over_ratios(algorithm, dataProcessor, logger, config):
                 config['model']['n_estimators'],
                 config['model']['learning_rate'],
                 class_weight,
-                np.random.randint(1000)
+                np.random.randint(1000),
+                config['app']['rootDir']
                 )
 
             model_runner = ModelRunner(model, data)
@@ -238,10 +240,12 @@ def loop_over_ratios(algorithm, dataProcessor, logger, config):
     return ratios_fmeasures, sorted(list(set(ratios_accepted)))
 
 def readAppConfigs():
-    with open('./config.json') as f:
+    root_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+    with open(os.path.join(root_dir, 'src', 'config.json')) as f:
         config = json.load(f)
-    config['app']['rootDir'] = os.path.dirname(
-        os.path.dirname(os.path.realpath(__file__)))
+
+    config['app']['rootDir'] = root_dir
 
     return config
 

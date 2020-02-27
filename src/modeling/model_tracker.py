@@ -2,9 +2,6 @@ import json
 from addict import Dict
 import os
 
-temp_folder = "temp/"
-
-
 class ModelTracker():
 
     @staticmethod
@@ -16,8 +13,9 @@ class ModelTracker():
         return Dict(tracker)
 
     @staticmethod
-    def dump_tracker(obj):
+    def dump_tracker(obj, root_path):
         # make dir
+        temp_folder = os.path.join(root_path, 'src', 'temp')
         if not os.path.exists(temp_folder):
             os.mkdir(temp_folder)
 

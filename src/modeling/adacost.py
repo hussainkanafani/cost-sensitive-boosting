@@ -29,7 +29,8 @@ class AdaCost(AdaBoostClassifier):
                  learning_rate=1.,
                  algorithm=None,
                  class_weight='balanced',
-                 random_state=None):
+                 random_state=None,
+                 root_path='./src/'):
         """
 
         :param base_estimator: object, optional (default=DecisionTreeClassifier)
@@ -64,6 +65,7 @@ class AdaCost(AdaBoostClassifier):
         self.model_tracker = ModelTracker.create_tracker(algorithm, 
                                         # get the second key value of the dict, which is the majority cost
                                         self.class_weight[list(self.class_weight.keys())[1]])
+        self.root_path = root_path
 
     def fit(self, X, y, sample_weight=None):
         """
@@ -152,7 +154,7 @@ class AdaCost(AdaBoostClassifier):
                 break
             
             if self.model_tracker:
-                ModelTracker.dump_tracker(self.model_tracker)
+                ModelTracker.dump_tracker(self.model_tracker, self.root_path)
         return self
 
     def _boost(self, iboost, X, y, sample_weight, random_state):

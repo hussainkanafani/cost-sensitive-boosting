@@ -8,13 +8,13 @@ import collections
 import os
 
 
-def createClassifier(algorithm, base_estimator, n_estimators, learning_rate, class_weight, random_state):
+def createClassifier(algorithm, base_estimator, n_estimators, learning_rate, class_weight, random_state, root_path):
     if base_estimator == "DecisionTreeClassifier":
         base_estimator = tree.DecisionTreeClassifier(random_state=random_state, max_depth=5)
     else:
         raise ValueError('base estimator is not supported')
 
-    return AdaCost(base_estimator, n_estimators, learning_rate, algorithm, class_weight, random_state)
+    return AdaCost(base_estimator, n_estimators, learning_rate, algorithm, class_weight, random_state, root_path)
 
 def classes_ordered_by_instances(data):
     """ returns classes sorted by number of instances """
