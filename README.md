@@ -17,7 +17,7 @@ python src/app.py
 The `config.json` file must be stored in the same directory where the `app.py` is. 
 
 
-```json
+```javascript
 {
     "app": {
         "cost_setup": [], // list of costs to loop over
