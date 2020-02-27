@@ -1,5 +1,13 @@
 {
-    "app": {},
+    "app": {
+        "cost_setup": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+        "ratio_setup": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+        "ratios_cost_setup": [0.1, 0.3, 0.5, 0.7, 0.9],
+        "n_experiments_doc": "number of experiments to be done in order to compute the average of the computed measures",
+        "n_experiments": 10,
+        "imbalance_ratio_doc": "if true, only the measures_vs_ratios will be computed and stored. Otherwise, measures_vs_costs and weights_vs_iterations will be computed and stored",
+        "imbalance_ratio": false
+    },
     "logger": {
         "name": "Root",
         "verbose": true,
@@ -7,6 +15,7 @@
     },
     "dataProcessor": {
         "dataDir": "data/processed/",
+        "testSetSize": 0.2,
         "datasets": [
             {
                 "filename": "hepatitis.data",
@@ -23,39 +32,32 @@
                 "categorical_features": []
             },
             {
+                "filename": "sick-euthyroid.data",
+                "categorical_features": ["sex", "on_thyroxine","query_on_thyroxine",
+                                        "on_antithyroid_medication","thyroid_surgery","query_hypothyroid",
+                                        "query_hyperthyroid","pregnant","sick","tumor","lithium","goitre",
+                                        "tsh_measured", "t3_measured", "tt4_measured", "t4u_measured",
+                                        "fti_measured", "tbg_measured"]
+            },
+            {
                 "filename": "bank-additional-full.csv",
                 "categorical_features": ["job","marital", "education", "default", "housing", "loan", "contact",
                                         "month", "day_of_week", "poutcome"]
-            },
-            {
-                "filename": "ldpa.csv",
-                "categorical_features": []
             }
-        ],
-        "please_add_to_the_list_after_solving_the_missing_values_problem": {
-            "filename": "sick-euthyroid.data",
-            "categorical_features": ["sex", "on_thyroxine","query_on_thyroxine",
-                                    "on_antithyroid_medication","thyroid_surgery","query_hypothyroid",
-                                    "query_hyperthyroid","pregnant","sick","tumor","lithium","goitre",
-                                    "tsh_measured", "t3_measured", "tt4_measured", "t4u_measured",
-                                    "fti_measured", "tbg_measured"]
-        }, 
-        "testSetSize": 0.2
+        ]
     },
     "model": {
+        "algorithms_doc": "list of possible algorithms [adaboost, adac1, adac2, adac3, adacost]",
         "algorithms": [
-            "adacost",
+            "adaboost",
             "adac1",
-            "adac2"
+            "adac2",
+            "adac3",
+            "adacost"
         ],
         "base_estimator": "DecisionTreeClassifier",
-        "n_estimators": 50,
-        "learning_rate": 1.0,
-        "class_weight": "balanced",
-        "random_state": 0
-    },
-    "evaluator": {},
-    "tracker": true,
-    "verbose": false,
-    "imbalance_ratio": true
+        "n_estimators_doc": "number of iterations that the algorithm has to do",
+        "n_estimators": 10,
+        "learning_rate": 1.0
+    }
 }

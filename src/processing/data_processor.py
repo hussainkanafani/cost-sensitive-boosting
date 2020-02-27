@@ -2,7 +2,6 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.impute import KNNImputer
 from .impute import CategoricalImputer
 from imblearn.over_sampling import RandomOverSampler
 
@@ -16,7 +15,7 @@ class DataProcessor:
         self.data = self.read_data(datasetPath)
         columns = self.data.columns.tolist()
 
-        # replace question marks with -1 in order to fit KNNImputer
+        # replace question marks with -1 in order to fit Imputer
         self.data = self.replace_question_marks()
         self.data = self.impute_missing_values(columns)
 
@@ -52,7 +51,6 @@ class DataProcessor:
                 'testY': testY, 'testX': testX}
 
     def split_training_from_testing_set(self, testSetSize):
-        # TODO: should it be a random construction ?
         train, test = train_test_split(self.data, test_size=testSetSize)
         return {'train': train, 'test': test}
 
@@ -69,21 +67,12 @@ class DataProcessor:
         return self.data
 
     def impute_missing_values(self, columns):
-        #imputer = KNNImputer(missing_values=-1, n_neighbors=1)
         imputer = CategoricalImputer(missing_values=np.nan, strategy='most_frequent')
         self.data = imputer.fit_transform(self.data)
     
         # converts numpy array to a pandas DataFrame
         self.data = pd.DataFrame(self.data, columns=columns)
         return self.data
-
-    def ignore_missing_values(self):
-        self.logger.info('Ignoring missing values ...')
-        indicies = []
-        for index, row in self.data.iterrows():
-            if '?' in row.values:
-                indicies.append(index)
-        return self.data.drop(indicies)
 
     def get_unique_categories(self, column_name):
         # gets unique values of a given column in the dataset

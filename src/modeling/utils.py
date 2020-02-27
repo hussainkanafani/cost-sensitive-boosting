@@ -8,7 +8,7 @@ import collections
 import os
 
 
-def createClassifier(algorithm, base_estimator, n_estimators, learning_rate, class_weight, random_state,tracker):
+def createClassifier(algorithm, base_estimator, n_estimators, learning_rate, class_weight, random_state):
     if base_estimator == "SVC":
         base_estimator = svm.SVC(gamma=2, C=1)
     elif base_estimator == "KNN":
@@ -16,7 +16,7 @@ def createClassifier(algorithm, base_estimator, n_estimators, learning_rate, cla
     else:
         base_estimator = tree.DecisionTreeClassifier(random_state=random_state, max_depth=5)
 
-    return AdaCost(base_estimator, n_estimators, learning_rate, algorithm, class_weight, random_state, tracker)
+    return AdaCost(base_estimator, n_estimators, learning_rate, algorithm, class_weight, random_state)
 
 # returns classes sorted by number of instances
 def classes_ordered_by_instances(data):
